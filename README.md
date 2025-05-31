@@ -1,6 +1,6 @@
 # Welcome to your Expo app 👋
 
-This is an [Expo](https://expo.dev) project created with [`create-expo-app`](https://www.npmjs.com/package/create-expo-app). Contributors are Guo Chen and Ziyi Xie. This is a Mobile App Aiming to Improve the Current Digital Laundry Services at NUS Dormitories.
+This is an [Expo](https://expo.dev) project created with [`create-expo-app`](https://www.npmjs.com/package/create-expo-app). 2 Contributors are Guo Chen and Ziyi Xie. This is a Mobile App Aiming to Improve the Current Digital Laundry Services at NUS Dormitories.
 
 ## Get started
 
