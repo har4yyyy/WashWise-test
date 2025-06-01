@@ -1,171 +1,233 @@
 import { useRouter } from 'expo-router';
 import { collection, doc, getDocs, updateDoc } from 'firebase/firestore';
 import { useEffect, useRef, useState } from 'react';
-import { Alert, FlatList, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
+import {
+  Alert,
+  FlatList,
+  StyleSheet,
+  Text,
+  TouchableOpacity,
+  View,
+  ScrollView,
+  SafeAreaView,
+} from 'react-native';
 import { db } from '../config/firebaseConfig';
 
 export default function MyLaundry() {
   const [machines, setMachines] = useState([]);
   const [selectedMachine, setSelectedMachine] = useState(null);
   const [duration, setDuration] = useState(0);
-  const [secondsLeft, setSecondsLeft] = useState(0);
-  const [isRunning, setIsRunning] = useState(false);
-  const [finished, setFinished] = useState(false);
-  const timerRef = useRef(null);
   const router = useRouter();
+  const timerRef = useRef(null);
+  const presetTimes = [30, 45, 60]; // minutes
 
-  const presetTimes = [30, 45, 60]; // in minutes
+  // 定时更新倒计时
+  useEffect(() => {
+    timerRef.current = setInterval(() => {
+      setMachines(prev =>
+        prev.map(machine => {
+          if (machine.availability === false && machine.endTime) {
+            const remaining = Math.max(0, Math.floor((machine.endTime - Date.now()) / 1000));
+            return { ...machine, remaining };
+          }
+          return machine;
+        })
+      );
+    }, 1000);
+    return () => clearInterval(timerRef.current);
+  }, []);
+
+  const fetchMachines = async () => {
+    const snapshot = await getDocs(collection(db, 'machines'));
+    const list = snapshot.docs.map(doc => {
+      const data = doc.data();
+      const remaining = data.availability === false && data.endTime
+        ? Math.max(0, Math.floor((data.endTime - Date.now()) / 1000))
+        : 0;
+      return {
+        id: doc.id,
+        ...data,
+        remaining,
+      };
+    });
+    setMachines(list);
+  };
 
   useEffect(() => {
-    const fetchMachines = async () => {
-      const snapshot = await getDocs(collection(db, 'machines'));
-      const availability = snapshot.docs
-        .map(doc => ({ id: doc.id, ...doc.data() }))
-        .filter(machine => machine.availability === true);
-      setMachines(availability);
-    };
-
     fetchMachines();
   }, []);
 
-  useEffect(() => {
-    if (isRunning) {
-      timerRef.current = setInterval(() => {
-        setSecondsLeft(prev => {
-          if (prev <= 1) {
-            clearInterval(timerRef.current);
-            setIsRunning(false);
-            setFinished(true);
-            updateMachineAvailability(true);
-            return 0;
-          }
-          return prev - 1;
-        });
-      }, 1000);
-    }
-
-    return () => clearInterval(timerRef.current);
-  }, [isRunning]);
-
-  const updateMachineAvailability = async (status) => {
-    if (!selectedMachine) return;
-    await updateDoc(doc(db, 'machines', selectedMachine.id), { available: status });
-  };
-
   const startLaundry = async () => {
-    if (!selectedMachine || selectedMachine.availability !== true || duration === 0) {
-      Alert.alert('Error', 'Please select an available machine and duration.');
+    if (!selectedMachine || duration === 0) {
+      Alert.alert('Error', 'Please select a machine and duration.');
       return;
     }
-
-    await updateMachineAvailability(false);
-    setSecondsLeft(duration);
-    setIsRunning(true);
-    setFinished(false);
-  };
-
-  const formatTime = (sec) => {
-    const minutes = Math.floor(sec / 60);
-    const seconds = sec % 60;
-    return `${String(minutes).padStart(2, '0')}:${String(seconds).padStart(2, '0')}`;
-  };
-
-  const handleCollect = () => {
+    const endTime = Date.now() + duration * 1000;
+    await updateDoc(doc(db, 'machines', selectedMachine.id), {
+      availability: false,
+      endTime,
+    });
     setSelectedMachine(null);
     setDuration(0);
-    setFinished(false);
-    setSecondsLeft(0);
+    fetchMachines();
+  };
+
+  const stopMachine = async (machineId) => {
+    await updateDoc(doc(db, 'machines', machineId), {
+      availability: true,
+      endTime: null,
+    });
+    fetchMachines();
+  };
+
+  const formatTime = (seconds) => {
+    const min = Math.floor(seconds / 60);
+    const sec = seconds % 60;
+    return `${String(min).padStart(2, '0')}:${String(sec).padStart(2, '0')}`;
   };
 
   return (
-    <View style={styles.container}>
-      <Text style={styles.heading}>🧼 Start Your Laundry</Text>
+    <SafeAreaView style={styles.container}>
+      <ScrollView contentContainerStyle={styles.content}>
+        <Text style={styles.heading}>My Laundry</Text>
 
-      {!isRunning && !finished && (
-        <>
-          <Text style={styles.subheading}>Select an Available Machine:</Text>
-          <FlatList
-            data={machines}
-            keyExtractor={(item) => item.id}
-            horizontal
-            renderItem={({ item }) => (
+        <Text style={styles.subheading}>Machines:</Text>
+        <FlatList
+          data={machines}
+          horizontal
+          keyExtractor={(item) => item.id}
+          showsHorizontalScrollIndicator={false}
+          renderItem={({ item }) => {
+            const inUse = item.availability === false;
+            const isSelected = selectedMachine?.id === item.id;
+            return (
               <TouchableOpacity
+                disabled={inUse}
+                onPress={() => !inUse && setSelectedMachine(item)}
                 style={[
                   styles.machineCard,
-                  selectedMachine?.id === item.id && styles.selectedCard
+                  isSelected && styles.selectedCard,
+                  inUse && styles.disabledCard,
                 ]}
-                onPress={() => setSelectedMachine(item)}
               >
-                <Text style={styles.machineText}>{item.type} @ {item.location}</Text>
+                <Text style={[styles.machineText, inUse && styles.strikethrough]}>
+                  {item.type}
+                </Text>
+                <Text style={[styles.machineLocation, inUse && styles.strikethrough]}>
+                  📍 {item.location}
+                </Text>
+                <Text style={{ color: inUse ? '#D9534F' : '#28a745', fontWeight: '600' }}>
+                  {inUse ? 'In Use' : 'Available'}
+                </Text>
+
+                {inUse && (
+                  <>
+                    <Text style={styles.timer}>⏳ {formatTime(item.remaining || 0)}</Text>
+                    <TouchableOpacity
+                      style={styles.stopButton}
+                      onPress={() => stopMachine(item.id)}
+                    >
+                      <Text style={styles.buttonText}>Stop</Text>
+                    </TouchableOpacity>
+                  </>
+                )}
               </TouchableOpacity>
-            )}
-          />
+            );
+          }}
+        />
 
-          <Text style={styles.subheading}>Select Duration:</Text>
-          <View style={styles.options}>
-            {presetTimes.map(mins => (
-              <TouchableOpacity
-                key={mins}
-                style={[styles.optionButton, duration === mins * 60 && styles.optionSelected]}
-                onPress={() => setDuration(mins * 60)}
-              >
-                <Text style={styles.optionText}>{mins} min</Text>
-              </TouchableOpacity>
-            ))}
-          </View>
+        <Text style={styles.subheading}>Duration:</Text>
+        <View style={styles.options}>
+          {presetTimes.map(mins => (
+            <TouchableOpacity
+              key={mins}
+              style={[
+                styles.optionButton,
+                duration === mins * 60 && styles.optionSelected,
+              ]}
+              onPress={() => setDuration(mins * 60)}
+            >
+              <Text style={styles.optionText}>{mins} min</Text>
+            </TouchableOpacity>
+          ))}
+        </View>
 
-          <TouchableOpacity style={styles.startButton} onPress={startLaundry}>
-            <Text style={styles.buttonText}>Start</Text>
-          </TouchableOpacity>
-        </>
-      )}
+        <TouchableOpacity style={styles.startButton} onPress={startLaundry}>
+          <Text style={styles.buttonText}>Start</Text>
+        </TouchableOpacity>
 
-      {isRunning && (
-        <Text style={styles.timerText}>⏳ Time Left: {formatTime(secondsLeft)}</Text>
-      )}
-
-      {finished && (
-        <>
-          <Text style={styles.doneText}>🎉 Laundry Done!</Text>
-          <TouchableOpacity style={styles.collectButton} onPress={handleCollect}>
-            <Text style={styles.buttonText}>Collect</Text>
-          </TouchableOpacity>
-        </>
-      )}
-
-      <Text style={styles.backHint} onPress={() => router.back()}>
-        ← Back to Home
-      </Text>
-    </View>
+        <TouchableOpacity onPress={() => router.back()}>
+          <Text style={styles.backHint}>← Back to Home</Text>
+        </TouchableOpacity>
+      </ScrollView>
+    </SafeAreaView>
   );
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1, padding: 20, backgroundColor: '#f4f4f4' },
-  heading: { fontSize: 24, fontWeight: 'bold', textAlign: 'center', marginBottom: 20 },
-  subheading: { fontSize: 18, fontWeight: '500', marginVertical: 10 },
+  container: { flex: 1, backgroundColor: '#f2f4f8' },
+  content: { padding: 20 },
+  heading: {
+    fontSize: 24, fontWeight: 'bold', textAlign: 'center', marginBottom: 20,
+  },
+  subheading: {
+    fontSize: 18, fontWeight: '600', marginVertical: 12,
+  },
   machineCard: {
-    backgroundColor: '#ddd',
-    padding: 12,
-    borderRadius: 10,
+    backgroundColor: '#e6e6e6',
+    padding: 14,
+    borderRadius: 12,
     marginHorizontal: 8,
+    width: 160,
+    alignItems: 'center',
   },
   selectedCard: {
-    backgroundColor: '#007bff',
+    backgroundColor: '#4682B4',
+  },
+  disabledCard: {
+    backgroundColor: '#ccc',
+    opacity: 0.7,
   },
   machineText: {
-    color: 'white',
-    fontWeight: '600',
+    fontSize: 16,
+    fontWeight: 'bold',
+    color: '#333',
   },
-  options: { flexDirection: 'row', marginVertical: 20 },
+  machineLocation: {
+    fontSize: 13,
+    color: '#555',
+    marginVertical: 4,
+  },
+  strikethrough: {
+    textDecorationLine: 'line-through',
+    color: '#888',
+  },
+  timer: {
+    fontSize: 14,
+    marginTop: 8,
+    color: '#333',
+  },
+  stopButton: {
+    backgroundColor: '#D9534F',
+    paddingVertical: 6,
+    paddingHorizontal: 10,
+    borderRadius: 8,
+    marginTop: 6,
+  },
+  options: {
+    flexDirection: 'row',
+    justifyContent: 'center',
+    marginBottom: 20,
+  },
   optionButton: {
-    backgroundColor: '#bbb',
-    padding: 10,
+    backgroundColor: '#ccc',
+    paddingVertical: 10,
+    paddingHorizontal: 14,
     borderRadius: 10,
-    marginHorizontal: 8,
+    marginHorizontal: 6,
   },
   optionSelected: {
-    backgroundColor: '#007bff',
+    backgroundColor: '#4682B4',
   },
   optionText: {
     color: '#fff',
@@ -173,17 +235,19 @@ const styles = StyleSheet.create({
   },
   startButton: {
     backgroundColor: '#28a745',
-    paddingVertical: 12,
+    paddingVertical: 14,
     borderRadius: 10,
-    marginTop: 10,
+    marginBottom: 30,
   },
-  collectButton: {
-    backgroundColor: '#007bff',
-    paddingVertical: 12,
-    borderRadius: 10,
-    marginTop: 10,
+  buttonText: {
+    color: 'white',
+    fontSize: 15,
+    fontWeight: '600',
+    textAlign: 'center',
   },
-  buttonText: { color: 'white', textAlign: 'center', fontSize: 16 },
-  timerText: { fontSize: 28, fontWeight: 'bold', textAlign: 'center', marginTop: 40 },
-  doneText: { fontSize: 22, textAlign: 'center', marginTop: 40, fontWeight: '600' },
+  backHint: {
+    textAlign: 'center',
+    fontSize: 16,
+    color: '#007AFF',
+  },
 });

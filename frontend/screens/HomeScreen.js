@@ -1,6 +1,6 @@
 import { useRouter } from 'expo-router';
 import { getAuth, onAuthStateChanged, signOut } from 'firebase/auth';
-import { collection, getDocs } from 'firebase/firestore';
+import { collection, onSnapshot } from 'firebase/firestore';
 import { useEffect, useState } from 'react';
 import {
   ScrollView,
@@ -27,19 +27,15 @@ export default function HomeScreen() {
     return unsubscribe;
   }, []);
 
+  // ✅ 实时监听 Firestore 中 machines 的变动
   useEffect(() => {
-    const fetchMachines = async () => {
-      try {
-        const snapshot = await getDocs(collection(db, 'machines'));
-        const list = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
-        list.sort((a, b) => (b.availability === true) - (a.availability === true));
-        setMachines(list);
-      } catch (err) {
-        console.error('Error fetching machines:', err);
-        Alert.alert('Error loading machines');
-      }
-    };
-    fetchMachines();
+    const unsubscribeMachines = onSnapshot(collection(db, 'machines'), (snapshot) => {
+      const list = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+      list.sort((a, b) => (b.availability === true) - (a.availability === true));
+      setMachines(list);
+    });
+
+    return unsubscribeMachines;
   }, []);
 
   const handleLogout = async () => {
@@ -55,7 +51,7 @@ export default function HomeScreen() {
     <View style={styles.container}>
       <View style={styles.content}>
         <Text style={styles.welcome}>
-          Welcome to WashWise @NUS{userEmail ? `\n${userEmail}` : ''}
+          Welcome to WashWise@NUS{userEmail ? `\n${userEmail}` : ''}
         </Text>
 
         <View style={styles.section}>
