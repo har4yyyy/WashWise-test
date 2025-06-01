@@ -59,13 +59,13 @@ export default function HomeScreen() {
         </Text>
 
         <View style={styles.section}>
-          <Text style={styles.sectionTitle}>Machines Availability</Text>
+          <Text style={styles.sectionTitle}>Machine Availability</Text>
 
           <View style={styles.machineList}>
             <ScrollView contentContainerStyle={styles.listContainer}>
               {machines.slice(0, 3).map((machine) => (
                 <View key={machine.id} style={styles.machineCard}>
-                  <Text style={styles.machineType}>Type: {machine.type}</Text>
+                  <Text style={styles.machineType}>{machine.type}</Text>
                   <Text
                     style={[
                       styles.machineStatus,
@@ -74,13 +74,13 @@ export default function HomeScreen() {
                   >
                     Status: {machine.availability ? 'Available' : 'In Use'}
                   </Text>
-                  <Text style={styles.machineLocation}>Location: {machine.location}</Text>
+                  <Text style={styles.machineLocation}>📍 {machine.location}</Text>
                 </View>
               ))}
             </ScrollView>
 
             <TouchableOpacity onPress={() => router.push('/machinesFullList')}>
-              <Text style={styles.tapHint}>View All</Text>
+              <Text style={styles.tapHint}>View All →</Text>
             </TouchableOpacity>
           </View>
         </View>
@@ -139,31 +139,35 @@ const styles = StyleSheet.create({
     maxHeight: 250,
   },
   machineCard: {
-    backgroundColor: '#e6e6e6',
-    padding: 12,
-    borderRadius: 10,
-    marginBottom: 10,
+    backgroundColor: '#f2f4f8',
+    padding: 14,
+    borderRadius: 12,
+    marginBottom: 12,
+    elevation: 2,
+    shadowColor: '#000',
+    shadowOpacity: 0.08,
+    shadowRadius: 4,
+    shadowOffset: { width: 0, height: 2 },
   },
   machineType: {
     fontWeight: 'bold',
     fontSize: 16,
+    marginBottom: 4,
   },
   machineStatus: {
     fontSize: 14,
-    marginTop: 4,
     fontWeight: '600',
+    marginBottom: 4,
   },
   machineLocation: {
-    fontSize: 14,
-    marginTop: 2,
-    color: '#333',
+    fontSize: 13,
+    color: '#555',
   },
   tapHint: {
-    fontSize: 14,
-    color: '#007bff',
     textAlign: 'center',
-    fontWeight: '500',
     marginTop: 10,
+    color: '#007AFF',
+    fontSize: 16,
   },
   button: {
     backgroundColor: '#4682B4',
@@ -182,11 +186,9 @@ const styles = StyleSheet.create({
     backgroundColor: '#D9534F',
     padding: 8,
     borderRadius: 10,
-    marginBottom: 20,
+    marginBottom: 10,
     elevation: 2,
-    bottom: 20,
-    left: '50%',
-    transform: [{ translateX: -75 }],
+    alignSelf: 'center',
     width: 150,
   },
 });

@@ -1,7 +1,14 @@
 import { useRouter } from 'expo-router';
 import { collection, getDocs } from 'firebase/firestore';
 import React, { useEffect, useState } from 'react';
-import { ScrollView, StyleSheet, Text, View } from 'react-native';
+import {
+  ScrollView,
+  StyleSheet,
+  Text,
+  View,
+  TouchableOpacity,
+  SafeAreaView,
+} from 'react-native';
 import { db } from '../config/firebaseConfig';
 
 export default function MachinesFullList() {
@@ -16,7 +23,6 @@ export default function MachinesFullList() {
           id: doc.id,
           ...doc.data(),
         }));
-
         machineList.sort((a, b) => Number(b.availability) - Number(a.availability));
         setMachines(machineList);
       } catch (error) {
@@ -28,52 +34,94 @@ export default function MachinesFullList() {
   }, []);
 
   return (
-    <ScrollView contentContainerStyle={styles.container}>
-      <Text style={styles.heading}>🧺 All Machines</Text>
+    <SafeAreaView style={styles.container}>
+      <View style={styles.contentWrapper}>
+        <ScrollView contentContainerStyle={styles.scrollContent}>
+          <Text style={styles.heading}>Machine Status</Text>
 
-      {machines.map(machine => (
-        <View key={machine.id} style={styles.machineCard}>
-          <Text style={styles.machineTitle}>Type: {machine.type}</Text>
-          <Text style={{ color: machine.availability ? 'green' : 'red' }}>
-            Status: {machine.availability ? 'Available' : 'In Use'}
-          </Text>
-          <Text>Location: {machine.location}</Text>
-        </View>
-      ))}
+          <View style={styles.machineList}>
+            {machines.map(machine => (
+              <View key={machine.id} style={styles.machineCard}>
+                <Text style={styles.machineType}>{machine.type}</Text>
+                <Text
+                  style={[
+                    styles.machineStatus,
+                    { color: machine.availability ? 'green' : 'red' },
+                  ]}
+                >
+                  Status: {machine.availability ? 'Available' : 'In Use'}
+                </Text>
+                <Text style={styles.machineLocation}>📍 {machine.location}</Text>
+              </View>
+            ))}
+          </View>
+        </ScrollView>
 
-      <Text style={styles.backHint} onPress={() => router.back()}>
-        ← Back to Home
-      </Text>
-    </ScrollView>
+        <TouchableOpacity onPress={() => router.back()} style={styles.backButton}>
+          <Text style={styles.backHint}>← Back to Home</Text>
+        </TouchableOpacity>
+      </View>
+    </SafeAreaView>
   );
 }
 
 const styles = StyleSheet.create({
   container: {
+    flex: 1,
+    backgroundColor: 'white',
+  },
+  contentWrapper: {
+    flex: 1,
+    justifyContent: 'space-between',
     padding: 20,
-    backgroundColor: '#f4f7fc',
+  },
+  scrollContent: {
+    paddingBottom: 20,
   },
   heading: {
-    fontSize: 26,
+    fontSize: 24,
     fontWeight: 'bold',
     textAlign: 'center',
     marginBottom: 20,
+    color: '#333',
+  },
+  machineList: {
+    marginBottom: 20,
   },
   machineCard: {
-    backgroundColor: '#fff',
-    padding: 16,
+    backgroundColor: '#f2f4f8',
+    padding: 14,
+    borderRadius: 12,
     marginBottom: 12,
-    borderRadius: 10,
     elevation: 2,
+    shadowColor: '#000',
+    shadowOpacity: 0.08,
+    shadowRadius: 4,
+    shadowOffset: { width: 0, height: 2 },
   },
-  machineTitle: {
-    fontSize: 18,
+  machineType: {
+    fontWeight: 'bold',
+    fontSize: 16,
+    marginBottom: 4,
+    color: '#000',
+  },
+  machineStatus: {
+    fontSize: 14,
     fontWeight: '600',
     marginBottom: 4,
   },
+  machineLocation: {
+    fontSize: 13,
+    color: '#555',
+  },
+  backButton: {
+    alignItems: 'center',
+    marginTop: 10,
+    paddingVertical: 10,
+  },
   backHint: {
-    marginTop: 30,
     textAlign: 'center',
+    marginTop: 10,
     color: '#007AFF',
     fontSize: 16,
   },
