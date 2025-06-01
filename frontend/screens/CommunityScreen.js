@@ -1,7 +1,7 @@
 import { View, Text, FlatList, StyleSheet, Image, Dimensions } from 'react-native';
 
 const screenWidth = Dimensions.get('window').width;
-const cardWidth = (screenWidth - 48) / 2; // 两列，每边 padding 16，中间 spacing 16
+const cardWidth = (screenWidth - 48) / 2;
 
 const mockPosts = [
   {

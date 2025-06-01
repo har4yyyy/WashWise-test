@@ -49,7 +49,7 @@ export default function HomeScreen() {
       </Text>
 
       <View style={styles.section}>
-        <Text style={styles.sectionTitle}>🧺 Machine Availability</Text>
+        <Text style={styles.sectionTitle}>🧺 Machines Availability</Text>
 
         <View style={styles.machineList}>
           <ScrollView contentContainerStyle={styles.listContainer}>
@@ -97,8 +97,9 @@ const styles = StyleSheet.create({
     fontSize: 18,
     fontWeight: '500',
     textAlign: 'center',
+    fontStyle: 'italic',
     marginBottom: 20,
-    color: '#333',
+    color: 'grey',
   },
 
   section: { marginBottom: 30 },
@@ -116,8 +117,6 @@ const styles = StyleSheet.create({
     padding: 10,
     maxHeight: 250,
   },
-
-  listContainer: { paddingBottom: 20 },
 
   machineCard: {
     backgroundColor: '#e6e6e6',
@@ -147,12 +146,9 @@ const styles = StyleSheet.create({
     fontSize: 14,
     color: '#007bff',
     textAlign: 'center',
-    marginTop: 10,
     textDecorationLine: 'underline',
     fontWeight: '500',
   },
-
-  navButtons: { marginTop: 20 },
 
   button: {
     backgroundColor: '#4682B4',
