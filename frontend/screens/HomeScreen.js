@@ -95,7 +95,7 @@ export default function HomeScreen() {
       </View>
 
       <TouchableOpacity onPress={handleLogout} style={styles.logoutButton}>
-        <Text style={styles.buttonText}>Log Out</Text>
+        <Text style={styles.logoutText}>Log Out</Text>
       </TouchableOpacity>
     </View>
   );
@@ -179,12 +179,15 @@ const styles = StyleSheet.create({
     textAlign: 'center',
   },
   logoutButton: {
-    backgroundColor: '#D9534F',
-    padding: 8,
-    borderRadius: 10,
-    marginBottom: 10,
-    elevation: 2,
-    alignSelf: 'center',
-    width: 150,
+    textAlign: 'center',
+    marginBottom: 20,
+    color: '#007AFF',
+    fontSize: 16,
+  },
+  logoutText: {
+    color: 'red',
+    fontSize: 16,
+    fontWeight: '600',
+    textAlign: 'center',
   },
 });
