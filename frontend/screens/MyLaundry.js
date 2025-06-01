@@ -135,7 +135,7 @@ export default function MyLaundry() {
                         style={styles.stopButton}
                         onPress={() => stopMachine(item.id)}
                       >
-                        <Text style={styles.buttonText}>Stop</Text>
+                        <Text style={styles.buttonText}>Collect</Text>
                       </TouchableOpacity>
                     </>
                   )}

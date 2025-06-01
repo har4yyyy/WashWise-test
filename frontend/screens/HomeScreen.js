@@ -189,6 +189,7 @@ const styles = StyleSheet.create({
   logoutText: {
     color: 'red',
     fontSize: 16,
+    fontStyle: 'italic',
     fontWeight: '600',
     textAlign: 'center',
   },
