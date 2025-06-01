@@ -1,5 +1,5 @@
 import { useRouter } from 'expo-router';
-import { getAuth, onAuthStateChanged } from 'firebase/auth';
+import { getAuth, onAuthStateChanged, signOut } from 'firebase/auth';
 import { collection, getDocs } from 'firebase/firestore';
 import { useEffect, useState } from 'react';
 import {
@@ -42,57 +42,79 @@ export default function HomeScreen() {
     fetchMachines();
   }, []);
 
+  const handleLogout = async () => {
+    try {
+      await signOut(auth);
+      Alert.alert('Logged out');
+    } catch (error) {
+      Alert.alert('Logout error', error.message);
+    }
+  };
+
   return (
     <View style={styles.container}>
-      <Text style={styles.welcome}>
-        Welcome to WashWise @NUS{userEmail ? `\n${userEmail}` : ''}
-      </Text>
+      <View style={styles.content}>
+        <Text style={styles.welcome}>
+          Welcome to WashWise @NUS{userEmail ? `\n${userEmail}` : ''}
+        </Text>
 
-      <View style={styles.section}>
-        <Text style={styles.sectionTitle}>🧺 Machines Availability</Text>
+        <View style={styles.section}>
+          <Text style={styles.sectionTitle}>Machines Availability</Text>
 
-        <View style={styles.machineList}>
-          <ScrollView contentContainerStyle={styles.listContainer}>
-            {machines.slice(0, 3).map((machine) => (
-              <View key={machine.id} style={styles.machineCard}>
-                <Text style={styles.machineType}>Type: {machine.type}</Text>
-                <Text
-                  style={[
-                    styles.machineStatus,
-                    { color: machine.availability ? 'green' : 'red' },
-                  ]}
-                >
-                  Status: {machine.availability ? 'Available' : 'In Use'}
-                </Text>
-                <Text style={styles.machineLocation}>Location: {machine.location}</Text>
-              </View>
-            ))}
-          </ScrollView>
+          <View style={styles.machineList}>
+            <ScrollView contentContainerStyle={styles.listContainer}>
+              {machines.slice(0, 3).map((machine) => (
+                <View key={machine.id} style={styles.machineCard}>
+                  <Text style={styles.machineType}>Type: {machine.type}</Text>
+                  <Text
+                    style={[
+                      styles.machineStatus,
+                      { color: machine.availability ? 'green' : 'red' },
+                    ]}
+                  >
+                    Status: {machine.availability ? 'Available' : 'In Use'}
+                  </Text>
+                  <Text style={styles.machineLocation}>Location: {machine.location}</Text>
+                </View>
+              ))}
+            </ScrollView>
 
-          <TouchableOpacity onPress={() => router.push('/machinesFullList')}>
-            <Text style={styles.tapHint}>View All Machines →</Text>
+            <TouchableOpacity onPress={() => router.push('/machinesFullList')}>
+              <Text style={styles.tapHint}>View All</Text>
+            </TouchableOpacity>
+          </View>
+        </View>
+
+        <View style={styles.navButtons}>
+          <TouchableOpacity onPress={() => router.push('/myLaundry')} style={styles.button}>
+            <Text style={styles.buttonText}>My Laundry</Text>
+          </TouchableOpacity>
+          <TouchableOpacity onPress={() => router.push('/rewards')} style={styles.button}>
+            <Text style={styles.buttonText}>Points & Rewards</Text>
+          </TouchableOpacity>
+          <TouchableOpacity onPress={() => router.push('/community')} style={styles.button}>
+            <Text style={styles.buttonText}>Community</Text>
           </TouchableOpacity>
         </View>
       </View>
 
-      <View style={styles.navButtons}>
-        <TouchableOpacity onPress={() => router.push('/myLaundry')} style={styles.button}>
-          <Text style={styles.buttonText}>My Laundry</Text>
-        </TouchableOpacity>
-        <TouchableOpacity onPress={() => router.push('/rewards')} style={styles.button}>
-          <Text style={styles.buttonText}>Points & Rewards</Text>
-        </TouchableOpacity>
-        <TouchableOpacity onPress={() => router.push('/community')} style={styles.button}>
-          <Text style={styles.buttonText}>Community</Text>
-        </TouchableOpacity>
-      </View>
+      <TouchableOpacity onPress={handleLogout} style={styles.logoutButton}>
+        <Text style={styles.buttonText}>Log Out</Text>
+      </TouchableOpacity>
     </View>
   );
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1, padding: 20, backgroundColor: '#f2f4f8' },
-
+  container: {
+    flex: 1,
+    backgroundColor: '#f2f4f8',
+    padding: 20,
+    justifyContent: 'space-between',
+  },
+  content: {
+    flex: 1,
+  },
   welcome: {
     fontSize: 18,
     fontWeight: '500',
@@ -101,67 +123,70 @@ const styles = StyleSheet.create({
     marginBottom: 20,
     color: 'grey',
   },
-
-  section: { marginBottom: 30 },
-
+  section: {
+    marginBottom: 20,
+  },
   sectionTitle: {
     fontSize: 22,
     fontWeight: 'bold',
     marginBottom: 10,
     textAlign: 'center',
   },
-
   machineList: {
     backgroundColor: '#fff',
     borderRadius: 10,
     padding: 10,
     maxHeight: 250,
   },
-
   machineCard: {
     backgroundColor: '#e6e6e6',
     padding: 12,
     borderRadius: 10,
     marginBottom: 10,
   },
-
   machineType: {
     fontWeight: 'bold',
     fontSize: 16,
   },
-
   machineStatus: {
     fontSize: 14,
     marginTop: 4,
     fontWeight: '600',
   },
-
   machineLocation: {
     fontSize: 14,
     marginTop: 2,
     color: '#333',
   },
-
   tapHint: {
     fontSize: 14,
     color: '#007bff',
     textAlign: 'center',
-    textDecorationLine: 'underline',
     fontWeight: '500',
+    marginTop: 10,
   },
-
   button: {
     backgroundColor: '#4682B4',
     padding: 16,
     borderRadius: 12,
-    marginVertical: 8,
+    marginVertical: 6,
     elevation: 2,
   },
-
   buttonText: {
     color: 'white',
     fontSize: 16,
     fontWeight: '600',
     textAlign: 'center',
+  },
+  logoutButton: {
+    backgroundColor: '#D9534F',
+    padding: 8,
+    borderRadius: 10,
+    marginBottom: 20,
+    elevation: 2,
+    bottom: 20,
+    left: '50%',
+    transform: [{ translateX: -75 }],
+    width: 150,
   },
 });
