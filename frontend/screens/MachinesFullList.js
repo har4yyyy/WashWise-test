@@ -42,7 +42,9 @@ export default function MachinesFullList() {
           <View style={styles.machineList}>
             {machines.map(machine => (
               <View key={machine.id} style={styles.machineCard}>
-                <Text style={styles.machineType}>{machine.type}</Text>
+                <Text style={styles.machineType}>
+                  {machine.type} #{machine.machineNumber}
+                </Text>
                 <Text
                   style={[
                     styles.machineStatus,

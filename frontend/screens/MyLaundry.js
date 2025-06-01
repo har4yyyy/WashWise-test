@@ -115,7 +115,7 @@ export default function MyLaundry() {
                   ]}
                 >
                   <Text style={[styles.machineText, inUse && styles.strikethrough]}>
-                    {item.type}
+                    {item.type} #{item.machineNumber}
                   </Text>
                   <Text style={[styles.machineLocation, inUse && styles.strikethrough]}>
                     📍 {item.location}

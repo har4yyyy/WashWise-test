@@ -61,7 +61,9 @@ export default function HomeScreen() {
             <ScrollView contentContainerStyle={styles.listContainer}>
               {machines.slice(0, 3).map((machine) => (
                 <View key={machine.id} style={styles.machineCard}>
-                  <Text style={styles.machineType}>{machine.type}</Text>
+                  <Text style={styles.machineType}>
+                    {machine.type} #{machine.machineNumber}
+                  </Text>
                   <Text
                     style={[
                       styles.machineStatus,
